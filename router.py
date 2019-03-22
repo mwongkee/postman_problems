@@ -192,8 +192,33 @@ def optimize_circuit(circuit_df):
         improving = False
     return circuit_df
 
+
+import os
+import pickle
+import shutil
+import dill
+import pandas as pd
+
+CACHE_ROOT = r'C:\tmp\cache'
 def run(query, start, name):
-    circuit_df, circuit, way_segments = get_cpp_circuit(query, start )
+    if os.path.exists(os.path.join(CACHE_ROOT, name)):
+        circuit_df = pd.read_csv(os.path.join(CACHE_ROOT, name, 'circuit_df.csv'))
+
+        with open(os.path.join(CACHE_ROOT, name, 'circuit.pkl'), 'rb') as f:
+            circuit = dill.load(f)
+        with open(os.path.join(CACHE_ROOT, name, 'way_segments.pkl'), 'rb') as f:
+            way_segments = dill.load(f)
+    else:
+        circuit_df, circuit, way_segments = get_cpp_circuit(query, start )
+        os.mkdir(os.path.join(CACHE_ROOT, name))
+        circuit_df.to_csv(os.path.join(CACHE_ROOT, name, 'circuit_df.csv'))
+
+        with open(os.path.join(CACHE_ROOT, name, 'circuit.pkl'), 'wb') as f:
+            dill.dump(circuit, f)
+
+        with open(os.path.join(CACHE_ROOT, name, 'way_segments.pkl'), 'wb') as f:
+            dill.dump(way_segments, f)
+
     print(get_num_turns(circuit_df))
 
     generate_gpx(circuit_df, way_segments, r'C:\tmp\{}_pre.gpx'.format(name))
@@ -247,3 +272,10 @@ if __name__ == '__main__':
     #
 
     run(falkirk_west_query, falkirk_west_start, 'falkirk_west')
+    run(gilbert_query, gilbert_start, 'gilbert')
+    run(iroquois_height_query, iroquois_starting_node, 'iroquois_heights')
+    run(west1_query, west1_start, 'west1')
+    run(mount2_query, mount2_start, 'mount2')
+
+
+

@@ -215,23 +215,29 @@ def draw_circuit(circuit_df, filepath):
 
     fig, ax = plt.subplots(figsize=(40, 40))
 
-    plotter = tilemapbase.Plotter(extent, tilemapbase.tiles.OSM, width=1200)
+    plotter = tilemapbase.Plotter(extent, tilemapbase.tiles.OSM, width=400)
     plotter.plot(ax)
     import matplotlib.cm as cm
     import numpy as np
     colors = cm.rainbow(np.linspace(0, 1, len(y)))
 
-    ax.plot(x, y)#, "ro-", markersize=20)
+    for i in range(len(y)-2):
+        plt.plot(x[i:i+2], y[i:i+2], linewidth=10)#, color=colors[i], markersize=20)#, "ro-", markersize=20)
 
-    #ax.plot(x, y, "ro-", markersize=20)
+    # ax.plot(x, y, "ro-", markersize=20)
 
-    i = 1
-    unique = set()
-    for xi, yi, ni in zip(x, y, nodeids):
-        if (xi, yi) not in unique:
-            unique.add((xi, yi))
-            plt.annotate(str(ni), (xi + .0000003, yi), size=40)
-            i += 1
+    node_to_num = defaultdict(list)
+    for i, node_id in enumerate(nodeids):
+        node_to_num[node_id].append(i)
+
+
+    # unique = set()
+    # for xi, yi, ni in zip(x, y, nodeids):
+    #     if (xi, yi) not in unique:
+    #         unique.add((xi, yi))
+    #         label = ','.join(map(str, node_to_num[ni]))
+    #         plt.annotate(i, label, (xi + .0000003, yi), size=40)
+
     plt.savefig(filepath, format='jpg')
 
 
