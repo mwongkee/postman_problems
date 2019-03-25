@@ -222,7 +222,7 @@ def draw_circuit(circuit_df, filepath):
     colors = cm.rainbow(np.linspace(0, 1, len(y)))
 
     for i in range(len(y)-2):
-        plt.plot(x[i:i+2], y[i:i+2], linewidth=10)#, color=colors[i], markersize=20)#, "ro-", markersize=20)
+        plt.plot(x[i:i+2], y[i:i+2], linewidth=10, color=colors[i])#, markersize=20)#, "ro-", markersize=20)
 
     # ax.plot(x, y, "ro-", markersize=20)
 
@@ -231,12 +231,12 @@ def draw_circuit(circuit_df, filepath):
         node_to_num[node_id].append(i)
 
 
-    # unique = set()
-    # for xi, yi, ni in zip(x, y, nodeids):
-    #     if (xi, yi) not in unique:
-    #         unique.add((xi, yi))
-    #         label = ','.join(map(str, node_to_num[ni]))
-    #         plt.annotate(i, label, (xi + .0000003, yi), size=40)
+    unique = set()
+    for xi, yi, ni in zip(x, y, nodeids):
+        if (xi, yi) not in unique:
+            unique.add((xi, yi))
+            label = ','.join(map(str, node_to_num[ni]))
+            plt.annotate(label, (xi + .0000003, yi), size=40)
 
     plt.savefig(filepath, format='jpg')
 

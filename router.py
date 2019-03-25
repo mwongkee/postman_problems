@@ -123,6 +123,31 @@ out skel qt;'''
 
 falkirk_west_start = 2918852312
 
+st_lazare_query = '''((way(poly:"45.4027590 -74.1781425 45.3922119 -74.1806316 45.3866061 -74.1816616 45.3864554 -74.1665983 45.3920311 -74.1659546 45.3965214 -74.1642380 45.4012524 -74.1633368 45.4027590 -74.1781425")[highway~"(residential|secondary)"];
+ way(231214779);); 
+ - way(id:35299369,35295612,100755563);
+ );
+out body;
+>;
+out skel qt;
+
+
+'''
+
+st_lazare_start = 1986015882
+
+cedarbrooke_query = '''((way(poly:"45.4024275 -74.1690016 45.4011921 -74.1554403 45.4107734 -74.1535521 45.4122195 -74.1671133 45.4024275 -74.1690016")[highway~"(residential|secondary)"];
+ way(id:231214779,231214774);); 
+ - way(id:187959876);
+ );
+out body;
+>;
+out skel qt;
+
+
+'''
+cedarbrooke_start = 1986016675
+
 from router_utils import get_cpp_circuit, draw_circuit, generate_gpx
 
 def get_num_turns(circuit_df):
@@ -165,14 +190,21 @@ def get_permutations(circuit_df):
         if len(perms):
             # print(i, circuit_df.iloc[i]['node'], len(perms),
             #       circuit_df.groupby('node').count().xs(circuit_df.iloc[i]['node'])['augmented'])
-
-            permutations[i] = perms.values.tolist()
+            vals = []
+            for x in perms.values.tolist():
+                if x < (len(circuit_df) - 1):
+                    vals.append(x + 1)
+                else:
+                    vals.append(0)
+            permutations[i] = vals
     return permutations
 
 
-def optimize_circuit(circuit_df):
+def optimize_circuit(circuit_df, name):
     improving = True
     restart = None
+    i = 0
+    draw_circuit(circuit_df, r'C:\tmp\{}_{}.jpg'.format(name, i))
     while improving or restart:
         print('restarting')
         restart = False
@@ -183,10 +215,14 @@ def optimize_circuit(circuit_df):
             for v in vs:
                 if restart:
                     break
+                if k == 0 or v == 0:
+                    continue
                 new_circuit = permute(circuit_df, k, v)
                 if new_circuit is not None:
                     circuit_df = new_circuit
-                    print('found new circuit')
+                    print('found new circuit, permute: {}->{}'.format(k, v))
+                    i += 1
+                    draw_circuit(circuit_df, r'C:\tmp\{}_{}_{}_{}.jpg'.format(name, i, k, v))
                     restart = True
 
         improving = False
@@ -224,7 +260,7 @@ def run(query, start, name):
     generate_gpx(circuit_df, way_segments, r'C:\tmp\{}_pre.gpx'.format(name))
     draw_circuit(circuit_df, r'C:\tmp\{}_pre.jpg'.format(name))
 
-    circuit_df = optimize_circuit(circuit_df)
+    circuit_df = optimize_circuit(circuit_df, name)
     print(get_num_turns(circuit_df))
 
     draw_circuit(circuit_df, r'C:\tmp\{}_opt.jpg'.format(name))
@@ -271,11 +307,14 @@ if __name__ == '__main__':
     # generate_gpx(circuit_df, way_segments, r'C:\tmp\gilbert_opt.gpx')
     #
 
-    run(falkirk_west_query, falkirk_west_start, 'falkirk_west')
-    run(gilbert_query, gilbert_start, 'gilbert')
-    run(iroquois_height_query, iroquois_starting_node, 'iroquois_heights')
-    run(west1_query, west1_start, 'west1')
-    run(mount2_query, mount2_start, 'mount2')
+    # run(falkirk_west_query, falkirk_west_start, 'falkirk_west')
+    # run(gilbert_query, gilbert_start, 'gilbert')
+    # run(iroquois_height_query, iroquois_starting_node, 'iroquois_heights')
+    # run(west1_query, west1_start, 'west1')
+    # run(mount2_query, mount2_start, 'mount2')
+    # run(gurnett_query, gurnett_start, 'gurnett')
+    # run(st_lazare_query, st_lazare_start, 'stlazare')
+    run(cedarbrooke_query, cedarbrooke_start, 'cedarbrooke')
 
 
 
