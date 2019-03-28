@@ -356,3 +356,115 @@ def generate_gpx(circuit_df, way_segments, filepath):
 
     with open(filepath, 'w') as f:
         f.write(gpx_txt)
+
+
+
+from networkx.classes.reportviews import OutMultiEdgeView, OutMultiEdgeDataView
+
+class MixedMultiEdgeDataView(OutMultiEdgeDataView):
+    """An EdgeDataView class for edges of MultiGraph; See EdgeDataView"""
+    __slots__ = ()
+
+    def __len__(self):
+        # nbunch makes it hard to count edges between nodes in nbunch
+        return sum(1 for e in self)
+
+    def __iter__(self):
+        seen = {}
+        for n, nbrs in self._nodes_nbrs():
+            for nbr, kd in nbrs.items():
+                if nbr not in seen:
+                    for k, dd in kd.items():
+                        yield self._report(n, nbr, k, dd)
+            seen[n] = 1
+        del seen
+
+    def __contains__(self, e):
+        u, v = e[:2]
+        try:
+            kdict = self._adjdict[u][v]
+        except KeyError:
+            try:
+                kdict = self._adjdict[v][u]
+            except KeyError:
+                return False
+        if self.keys is True:
+            k = e[2]
+            try:
+                dd = kdict[k]
+            except KeyError:
+                return False
+            return e == self._report(u, v, k, dd)
+        for k, dd in kdict.items():
+            if e == self._report(u, v, k, dd):
+                return True
+        return False
+
+
+class MixedMultiEdgeView(OutMultiEdgeView):
+    """A EdgeView class for edges of a MultiGraph"""
+    __slots__ = ()
+
+    dataview = MixedMultiEdgeDataView
+
+    def __len__(self):
+        return sum(len(kdict) for n, nbrs in self._nodes_nbrs()
+                   for nbr, kdict in nbrs.items()) // 2
+
+    def __iter__(self):
+        seen = {}
+        for n, nbrs in self._nodes_nbrs():
+            for nbr, kd in nbrs.items():
+                if nbr not in seen:
+                    for k, dd in kd.items():
+                        yield (n, nbr, k)
+            seen[n] = 1
+        del seen
+
+class MixedMultiGraph(nx.MultiGraph):
+    def add_arc(self, u, v, key=None, **attr):
+        if u not in self._adj:
+            self._adj[u] = self.adjlist_inner_dict_factory()
+            self._node[u] = {}
+        if v not in self._adj:
+            self._adj[v] = self.adjlist_inner_dict_factory()
+            self._node[v] = {}
+        if key is None:
+            key = self.new_edge_key(u, v)
+        if v in self._adj[u]:
+            keydict = self._adj[u][v]
+            datadict = keydict.get(key, self.edge_attr_dict_factory())
+            datadict.update(attr)
+            keydict[key] = datadict
+        else:
+            # selfloops work this way without special treatment
+            datadict = self.edge_attr_dict_factory()
+            datadict.update(attr)
+            keydict = self.edge_key_dict_factory()
+            keydict[key] = datadict
+            self._adj[u][v] = keydict
+        # G._adj[v][u] = keydict
+        return key
+
+
+
+
+
+if __name__ == '__main__':
+    import networkx as nx
+
+    MMG = MixedMultiGraph()
+    MMG.add_edge(1, 2)
+    MMG.add_arc(1, 3)
+    MMG.add_arc(3, 2)
+
+    MMG.edges
+    MMG.edges
+
+
+    G = nx.Graph()
+    MG = nx.MultiGraph()
+    DG = nx.DiGraph()
+    MDG = nx.MultiDiGraph()
+    for g in [G, MG, DG, MDG]:
+        g.add_edge(1, 2, weight=1)
