@@ -1,0 +1,2 @@
+#!/usr/bin/env bash 
+source C:\Users\mwongkee\Anaconda3\Scripts\deactivate "$@"
